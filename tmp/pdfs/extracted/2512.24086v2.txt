@@ -1,0 +1,338 @@
+
+
+===== PAGE 1 =====
+RainFusion2.0: Temporal-Spatial Awareness and Hardware-Efficient Block-wise
+Sparse Attention
+Aiyue Chen∗1 Yaofu Liu∗1,2 Junjian Huang∗1
+chenaiyue@huawei.com yliuls@connect.ust.hk huangjunjian3@huawei.com
+Guang Lian∗1 Yiwu Yao∗1 Wangli Lan∗1
+lianguang@huawei.com yiwuyao@pku.edu.cn lanwangli@huawei.com
+Jing Lin∗1 Zhixin Ma∗1 Tingting Zhou∗1
+linjing28@huawei.com mazhixin7@huawei.com zhoutingting13@huawei.com
+Abstract forms.
+In video and image generation tasks, Diffusion Transformer
+(DiT) models incur extremely high computational costs due 1. Introduction
+to attention mechanisms, which limits their practical appli-
+Diffusion Transformer (DiT) models have exhibited out-
+cations. Furthermore, with hardware advancements, a wide
+standing performance in visual generation tasks. How-
+range of devices besides graphics processing unit (GPU),
+ever, their tremendously high computational cost limits the
+such as application-specific integrated circuit (ASIC), have
+practical application of DiT models. Among these costs,
+been increasingly adopted for model inference. Sparse at-
+the major component stems from the Attention mecha-
+tention, which leverages the inherent sparsity of attention
+nism, whose computation scales exponentially with token
+by skipping computations for insignificant tokens, is an ef-
+length—ranging from 10K to 80K in current state-of-the-
+fective approach to mitigate computational costs. How-
+art DiT models. As research advances, it has been revealed
+ever, existing sparse attention methods have two critical
+that the Attention mechanism possesses inherent sparsity:
+limitations: the overhead of sparse pattern prediction and
+the softmax operation in Attention enables a minor subset
+the lack of hardware generality, as most of these meth-
+of tokens to exert a dominant impact on the final output.
+ods are designed for GPU. To address these challenges,
+Consequently, sparse Attention, which accelerates Atten-
+this study proposes RainFusion2.0, which aims to develop
+tion computation by only focusing on critical tokens, has
+an online adaptive, hardware-efficient, and low-overhead
+emerged as a prevalent optimization approach. Currently,
+sparse attention mechanism to accelerate both video and
+sparse Attention methods can be primarily categorized into
+image generative models, with robust performance across
+three types: (1) fixed patterns, (2) online adaptive masks,
+diverse hardware platforms. Key technical insights in-
+and (3) token permutations. Nevertheless, most of these ex-
+clude: (1) leveraging block-wise mean values as represen-
+istingmethodssufferfromcertainlimitations, whichrestrict
+tative tokens for sparse mask prediction; (2) implementing
+their widespread practical adoption.
+spatiotemporal-aware token permutation; and (3) introduc-
+Limitations: 1.TheDilemmaofbalancingAccuracyand
+ing a first-frame sink mechanism specifically designed for
+Efficiency. Twomainfactorscontributetothisdilemma: (1)
+video generation scenarios. Experimental results demon-
+sparsity degree; (2) the cost of predicting sparse patterns.
+strate that RainFusion2.0 can achieve 80% sparsity while
+For fixed patterns, the overhead of prediction is relatively
+achieving an end-to-end speedup of 1.5 1.8× without com-
+small. However, to achieve high accuracy, fixed-pattern
+promising video quality. Moreover, RainFusion2.0 demon-
+methods typically require a low sparsity degree, which
+strates effectiveness across various generative models and
+consequently compromises efficiency. On the other hand,
+validates its generalization across diverse hardware plat-
+online adaptive mask-based and token permutation-based
+methods involve substantial overhead, primarily due to the
+∗Allauthorscontributeequallytothisworkasthefirstauthors.
+costs associated with predicting the sparse mask and the
+†Correspondingauthor: HarryYang. E-mail: yangharry@ust.hk
+1 Huawei Technologies Co., Ltd 2The Hong Kong University of token permutation layout. 2.Lack of Device Universality.
+ScienceandTechnology A major shortcoming of existing works is their neglect of
+6202
+rpA
+02
+]VC.sc[
+2v68042.2152:viXra
+
+===== PAGE 2 =====
+universality across various devices. Most prediction meth- each block and uses these block means to derive attention
+ods are specifically designed for Graphics Processing Units scores. It then selects the top-k blocks such that their cumu-
+(GPUs) and are not universally applicable to other Artificial lative distribution function (CDF) meets a specific thresh-
+Intelligence (AI) devices such as Application Specific In- old. Concurrently, it computes the cosine similarity be-
+tegrated Circuit(ASIC). Specifically, the prediction process tween tokens within each block. Adaptive Sparse Attention
+incurs unacceptably long time costs on AI devices other (AdaSpa)[4] observes that the sparse patterns for each layer
+than GPUs. and head in DiT models remain stable throughout the dif-
+Goal: We aim to design an online adaptive, hardware- fusion steps. Consequently, in the initial timesteps, it main-
+efficient, and overhead-free sparse attention mechanism to tains full attention and online computes the optimal sparse
+accelerate video and image generation models. pattern for each layer, which is then reused in subsequent
+Key Idea: 1.Adaptive and Efficient Design. We partition steps.
+tokens into different blocks and use the mean value of each (3) Token Permutations: This approach focuses on re-
+block as the representative token for predicting the sparse arranging similar tokens to be adjacent, thereby enabling ef-
+mask. 2.Spatiotemporal-aware permutation. To enhance fective sparsification. PAROAttention[8] primarily explores
+the similarity within each block, we adopt a spatiotemporal- permuting video tokens across different dimensions, such
+aware permutation strategy. Based on the inherent spatial as frame, height, and width, resulting in six possible order-
+relationships of videos or images, tokens are divided into ings. Sparse Video Generation 2 (SVG2)[5] employs K-
+three-dimensional (3D) or two-dimensional (2D) windows. means clustering to group similar tokens together. It then
+Tokens within each window are arranged adjacently and uses the centroid of each cluster as its representative. Based
+then flattened window by window. 3.First Frame Sink for on these centroids, SVG2 computes the attention scores
+Video Generation. For video generation models, we fix the between clusters to determine which inter-cluster attention
+attention computation relationship with the tokens of the computations can be strategically omitted.
+first frame. This fixed pattern is termed ”First Frame Sink”.
+4.Hardware Generality. Most importantly, our proposed 3. Method
+method not only features low overhead but also achieves
+3.1. Blockwise Sparse
+generality across vary types of AI devices.
+Flash attention is the backbone of the modern transformer
+2. Related Work
+model. RainFusion2 adopts flash attention into the sparse
+mode. Consider the attention operation: given the query,
+Sparse attention mechanisms have garnered significant re-
+key, value matrices Q,K,V ∈ RN×d, we have S =
+search interest within the domain of video and image gen- √
+QK⊤/ d, P = Softmax(S), O = PV ,
+erative diffusion models. This work categorizes these ad-
+where the Softmax function is defined element-wise as
+vancements into three primary paradigms:
+Softmax(S) = exp(Sij) .
+(1) Fixed Sparse Patterns: Sparse attention with fixed ij (cid:80)
+k
+exp(Sik)
+patterns typically employs a predetermined set of sparse Flash attention: Divide Q into T q blocks {Q i } with
+masks. The model selects one of these masks for use. block size b q , where Q i ∈ Rbq×d and T q = [N/b q ]. Divide
+For instance, Sliding Tile Attention (STA)[7] precomputes K and V into T k blocks {K i } and {V i } respectively, with
+a set of sliding window masks. Leveraging a small num- the same block size b k , where K i ∈ Rbk×d, V i ∈ Rbk×d
+ber of prompts, STA matches an optimal pattern for each and T k = [N/b k ].
+layer and each head within the Denoising Diffusion Trans- Subsequently, it use online softmax to compute each
+former (DiT). During the generation of new videos, these block of the output O iteratively. The calculation of block
+pre-matched masks are directly used. Similarly, Sparse O i proceeds as:
+Video Generation (SVG)[3] designs two distinct pattern √
+S = Q K⊤/ d, (1)
+types: temporal and spatial masks. When computing atten- i,j i j
+tion, SVG dynamically checks which mask is most suitable (m ,P˜ ) = f˜(m ,S ), (2)
+i,j i,j i,j−1 i,j
+for the current attention head. Rainfusion[1] extends this
+l = exp(m − m )l + rowsum(P˜ ),
+concept by introducing three mask types: temporal, spatial, i,j i,j−1 i,j i,j−1 i,j
+(3)
+and textural. Analogous to SVG, Rainfusion dynamically
+assigns the most appropriate mask to each attention head. O i,j = diag(exp(m i,j−1 − m i,j ))O i,j−1 + P˜ i,j V j
+(2) Online Adaptive Patterns: This category of sparse (4)
+attention does not rely on fixed masks. Instead, tokens are
+generally partitioned into blocks, and the model determines where m i,j ,l i,j ∈ Rbq×1, with initial values set to −∞ and
+online which block tokens will participate in the attention 0 respectively. The operator f˜(·) is defined as follows: it
+computation. SparseAttention [6] calculates the mean for computes m = max{m ,rowmax(S )} and P˜ =
+i,j i,j−1 i,j i,j
+
+===== PAGE 3 =====
+Figure 1. Workflow of RainFusion2.0
+exp(S − m ). Finally, the block O (the final output of where the matrix Sˆ has dimensions ⌈N/b ⌉ × ⌈N/b ⌉,
+i,j i,j i q k
+this incremental process) is obtained via: and {Sˆ } serves as an indicator to quantify the contribution
+ij
+of the block pair (Q ,K ) to the overall attention scores.
+i j
+O i = diag(l i,j )−1 O i,j Subsequently, we select the top-n important blocks {K j }
+for each block {Q } based on the values of Sˆ .
+i ij
+To accelerate attention computation and improve hard-
+ware utilization, we either skip or compute the full block-
+(cid:40) (cid:110) (cid:16) (cid:17)(cid:111)
+wise matrix multiplications of Q i K j ⊤ and P i,j V j . We 1, if j ∈ j | Sˆ ij ∈ TopN Sˆ,dim = 0 ,
+M =
+define a block-wise attention mask M with dimensions ij
+0, otherwise,
+⌈N/b ⌉ × ⌈N/b ⌉, where each element takes a value of ei-
+q k (8)
+ther 0 or 1. The sparse Flash Attention mechanism is then
+However, a key challenge persists in this design: Despite
+implemented as follows:
+the high similarity between adjacent tokens, those within a
+single block still show considerable variability. To mitigate
+Q K⊤ and P V are skipped if M = 0.
+i j i,j j ij this issue, some studies compute the cosine similarity of to-
+kens inside blocks Q and K ; yet, this approach imposes
+3.2. Representative Token for Blocks i j
+considerable computational overhead. In contrast, we em-
+To derive the block-wise attention mask M, if we calculate ploy window permutation techniques to enhance the simi-
+thefullattentionscoresP asQ×K⊤, thisapproachactually larity of tokens within blocks Q and K .
+i j
+offers no sparsity-induced speedup. Thus, we select repre-
+sentative tokens qˆ and kˆ for each block Q (query block) 3.3. 3D Window Permutation
+i i i
+and K i (key block), respectively. In video generation diffusion models, although tokens are
+The core idea underlying the design of representative to- flattened into 1D sequences, they inherently encode 3D
+kens originates from the observation that adjacent tokens physical spatiotemporal information. The length of the to-
+in the Q,K matrix exhibit high similarity—a characteris- ken sequence is given by N = F ·W ·H, where F, H, and
+tic that is consistent across different models and also across W denote the number of frames, spatial height, and spatial
+distinct attention layers within a single model. width of the video in the latent space, respectively. The to-
+The representative tokens qˆ i and kˆ j are defined as fol- kens typically exhibit similarity to adjacent tokens in both
+lows: temporal and spatial dimensions.
+The default token layout in diffusion models is
+qˆ= {qˆ i } = mean(Q i ,axis = 0), (5) [F,H,W]. However, this order weakens the adjacent sim-
+kˆ = {kˆ } = mean(K ,axis = 0), (6) ilarity in both the temporal and spatial dimensions. To-
+j j
+kens that are adjacent in 3D space are shuffled into different
+Sˆ = {Sˆ } = {qˆ kˆ⊤} (7)
+ij i j 1D positions. Consequently, the tokens within each block
+
+===== PAGE 4 =====
+are essentially non-adjacent in 3D space, thus undermining Image Generation Model: We additionally implemented
+their self-similarity. experiments on the image generation model Qwen-image-
+Permutation: To enhance the similarity of tokens within edit.
+each block (i.e., Q and K ), we rearrange the tokens in a Evaluation Metrics: For video generation models,
+i j
+3D window-based order. The details will be released later. Vbench[2] was primarily adopted as the core evaluation
+metric for video quality, which encompasses multiple crit-
+3.4. First Frame Sink
+ical dimensions including subjective consistency, imaging
+Similar to the well-documented ”attention sink” phe- quality, and overall consistency. Furthermore, we intro-
+nomenon in large language models (LLMs), where initial duced cosine similarity to characterize the overall differ-
+tokens receive high levels of attention, an analogous phe- ences between videos generated by the full attention mech-
+nomenon exists in video generation models with 3D full at- anism and those generated by RainFusion2.
+tention. We refer to this analogous phenomenon in video Baseline: FullAttentionwasemployedasthefundamen-
+generation as the First Frame Sink. tal baseline for comparison. We tested RainFusion2 with
+Our observations across a range of video generation different sparsity levels (80% and 90%). Other sparse at-
+models reveal that the first frame exerts a substantial influ- tention methods (e.g., SparseAttention and SVG2) exhibit
+ence on the quality of the final generated video. Specifi- poor compatibility with NPUs, and thus were not included
+cally, omitting the attention computation involving tokens in the efficiency comparison experiments.
+corresponding to the first frame leads to a non-trivial degra- Perceptual Evaluation: While Vbench metrics can re-
+dation in the quality of the generated video. Thus, tokens in flect the overall quality of videos and cosine similarity can
+Q that represent the first frame are designed to attend to all characterize overall differences, these metrics struggle to
+tokens in K, while all tokens in Q are enforced to attend to capture the fine-grained differences that are perceptible to
+tokens in K that correspond to the first frame. the human eye. To address this limitation, we incorporated
+In the Fig. 1, the first frame token is shown at the begin- perceptual evaluation to quantitatively assess the detailed
+ning of the sequence. However, in practice, we move the differences between videos.
+first frame token to the end of the sequence. This is because
+4.2. Main result
+some models combine video and text tokens as multimodal
+input for attention computation. By grouping the first frame Video Generation Models: For Wan2.2 generating 720p
+token with the text tokens, we can ensure they both partici- videos, we achieve a speedup of 1.57× to 1.8× with a spar-
+pate in full attention. sity ratio of 80% to 90%, while maintaining nearly im-
+perceptible quality loss (visually indistinguishable from the
+4. Experiment full attention baseline). For HunyuanVideo1.5, configuring
+a sparsity ratio of 80% to 90% also yields videos with al-
+4.1. setup
+most no visual quality degradation. Specifically, at 80%
+Device: We evaluated our method on the Neural Process- sparsity, HunyuanVideo1.5 achieves a 1.16× speedup for
+ing Unit (NPU), a type of Application-Specific Integrated 480p video generation and a 1.28× speedup under the 720p
+Circuit (ASIC). As a typical and prevalent AI device dis- setting.
+tinct from Graphics Processing Units (GPUs), NPUs have Image Generation Model: We also validated our method
+been widely deployed for the inference of diffusion mod- on the Qwen Image Edit model. Even with a sparsity ratio
+els. To highlight the hardware universality and efficiency of of 60%, the model maintains consistent quality in generated
+our proposed method, we conducted comprehensive perfor- images (visually aligned with the full attention baseline).
+mance evaluations on NPUs. Ablation Study: We conduct ablation experiments on the
+Model: We validated the effectiveness of RainFusion2 3D window permutation. Although omitting permutation
+by applying it to various generative models, covering both still performs well in quality metrics, and its cosine similar-
+video and image generation tasks. ity is nearly identical to that of the videos generated with
+Video Generation Models: Experiments were conducted full attention, visual inspection of the generated videos re-
+on Wan2.2 and Hunyuanvideo1.5. For Wan2.2, we per- veals minor yet noticeable differences in temporal motion
+formed tests on the 720P resolution. For Hunyuanvideo1.5, smoothness and frame details. For example, as shown in
+evaluations were carried out on both 480P and 720P video Fig. 3, videos generated without 3D window permutation
+resolutions. Notably, Hunyuanvideo1.5 inherently incorpo- are generally similar to those of full attention, but obvious
+rates a sparse attention mechanism when generating 720P flaws appear in some local areas — these differences are
+videos. We thus conducted comparative experiments be- hard to capture with common quality metrics. In contrast,
+tween RainFusion2 and this native sparse attention mecha- adding 3D window permutation results in videos that are
+nism in terms of both accuracy and performance. visually consistent with full attention, both in overall ap-
+
+===== PAGE 5 =====
+Table 1. RainFusion2 and Full Attention Comparison: Quality & Efficiency Metrics (Wan2.2 720p)
+QualityMetrics EfficiencyMetrics
+Method(sparsity)
+Subj. Cons. ↑ ImagingQual. ↑ OverallCons. ↑ CosineSim. ↑ Latency(s) Speedup
+FullAttention 0.9717 0.6816 0.2591 532
+RainFusion(80%)(w/o3Dorder) 0.9690 0.6791 0.2555 0.9532 339 1.57x
+RainFusion(90%)(w/o3Dorder) 0.9643 0.6709 0.2555 0.9476 295 1.80x
+RainFusion(80%)(w/3Dorder) 0.9683 0.6864 0.2562 0.9514 339 1.57x
+Qwen-image-
+HunyuanVideo1.5 Wan2.2
+edit
+Full
+RainFusion
+Figure 2. Results of RainFusion on Diffusion Models. HunyuanVideo1.5 and Wan2.2 generate 720p videos under two configurations: full
+attention and RainFusion with 80% sparsity. Qwen-image-edit generates 1024×1024 images using RainFusion with 60% sparsity.
+(a) Full Attention (b) RainFusion 80% (w/o 3D permutation) (c) RainFusion 80% (w/ 3D permutation)
+Figure 3. Experimental results on the Wan2.2 dataset. As shown in Subfigure (b), the video generated by RainFusion (80% sparsity,
+without 3D permutation) is overall comparable to that of full attention (Subfigure (a)). However, two prominent spurious rock artifacts
+emerge in the bottom-right corner of the video frame. In contrast, these visual artifacts are completely eliminated when 3D permutation is
+integrated into RainFusion (Subfigure (c)).
+pearance and fine-grained details. a practical and high-performance solution for accelerating
+DiT models but also paves the way for their broader deploy-
+ment on heterogeneous computing devices. Future work
+5. Conclusion
+will focus on exploring how to combine RainFusion2.0 with
+other orthogonal acceleration methods, such as quantization
+In conclusion, this study has addressed the critical chal-
+and distillation.
+lenges of high computational cost in DiT and limited hard-
+ware generality in sparse attention by proposing RainFu-
+sion2.0. Through the innovative integration of block-wise References
+representativetokenprediction, spatiotemporal-awaretoken
+[1] Aiyue Chen et al. Rainfusion: Adaptive video generation ac-
+permutation, and a first-frame sink mechanism, RainFu-
+celeration via multi-dimensional visual redundancy. In arXiv
+sion2.0 achieves a remarkable balance between efficiency
+preprint arXiv:2505.21036, 2025. 2
+and performance. The experimental results demonstrate
+that it can achieve 80% sparsity, leading to an end-to-end [2] Ziqi Huang, Yinan He, Jiashuo Yu, Fan Zhang, Chenyang
+speedup of 1.5 1.8× across various video and image genera- Si, Yuming Jiang, Yuanhan Zhang, Tianxing Wu, Qingyang
+tivemodels, allwhilemaintaininghighoutputquality. More Jin, Nattapol Chanpaisit, Yaohui Wang, Xinyuan Chen, Limin
+importantly, its hardware-efficient design allows RainFu- Wang, Dahua Lin, Yu Qiao, and Ziwei Liu. Vbench: Com-
+sion2.0 to work across a wide range of platforms, effec- prehensive benchmark suite for video generative models. In
+tively mitigating the hardware-specific limitations of exist- CVPR, pages 21807–21818, 2024. 4
+ing sparse attention methods. This work not only provides [3] Haocheng Xi et al. Sparse videogen: Accelerating video
+
+===== PAGE 6 =====
+diffusion transformers with spatial-temporal sparsity. In
+Forty-second International Conference on Machine Learning,
+2025. 2
+[4] Yifei Xia, Suhan Ling, Fangcheng Fu, Yujie Wang, Huixia Li,
+XuefengXiao, andBinCui. Training-freeandadaptivesparse
+attentionforefficientlongvideogeneration. InProceedingsof
+the IEEE/CVF International Conference on Computer Vision
+(ICCV), pages 15982–15993, 2025. 2
+[5] Shuo Yang, Haocheng Xi, Yilong Zhao, Muyang Li, Jin-
+tao Zhang, Han Cai, Yujun Lin, Xiuyu Li, Chenfeng Xu,
+Kelly Peng, Jianfei Chen, Song Han, Kurt Keutzer, and
+Ion Stoica. Sparse videogen2: Accelerate video generation
+with sparse attention via semantic-aware permutation. In
+The Thirty-ninth Annual Conference on Neural Information
+Processing Systems, 2025. 2
+[6] Jintao Zhang, Chendong Xiang, Haofeng Huang, Jia wei,
+Haocheng Xi, Jun Zhu, and Jianfei Chen. Spargeattention:
+Accurate and training-free sparse attention accelerating any
+model inference. In Forty-second International Conference
+on Machine Learning, 2025. 2
+[7] PeiyuanZhangetal. Fastvideogenerationwithslidingtileat-
+tention. InForty-secondInternationalConferenceonMachine
+Learning, 2025. 2
+[8] Tianchen Zhao, Ke Hong, Xinhao Yang, Xuefeng Xiao,
+Huixia Li, Feng Ling, Ruiqi Xie, SiQi Chen, Hongyu Zhu,
+Zhang Yichong, and Yu Wang. PAROAttention: Pattern-
+aware reordering for efficient sparse and quantized attention
+in visual generation models. In The Thirty-ninth Annual
+Conference on Neural Information Processing Systems, 2025.
+2

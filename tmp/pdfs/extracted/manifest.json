@@ -1,0 +1,57 @@
+[
+  {
+    "file": "C:\\Users\\h84415796\\Documents\\DiT\\paper\\负载\\2512.24086v2.pdf",
+    "pages": 6,
+    "metadata": {
+      "Author": "Aiyue Chen; Yaofu Liu; Junjian Huang; Guang Lian; Yiwu Yao; Wangli Lan; Jing Lin; Zhixin Ma; Tingting Zhou",
+      "Creator": "arXiv GenPDF (tex2pdf:a6404ea)",
+      "DOI": "https://doi.org/10.48550/arXiv.2512.24086",
+      "License": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "PTEX.Fullbanner": "This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) kpathsea version 6.4.1",
+      "Producer": "pikepdf 8.15.1",
+      "Title": "RainFusion2.0: Temporal-Spatial Awareness and Hardware-Efficient Block-wise Sparse Attention",
+      "Trapped": "False",
+      "arXivID": "https://arxiv.org/abs/2512.24086v2"
+    },
+    "text_file": "C:\\Users\\h84415796\\Documents\\DiT\\tmp\\pdfs\\extracted\\2512.24086v2.txt",
+    "characters": 22381
+  },
+  {
+    "file": "C:\\Users\\h84415796\\Documents\\DiT\\paper\\负载\\2602.02092v1.pdf",
+    "pages": 22,
+    "metadata": {
+      "Author": "FSVideo Team; Qingyu Chen; Zhiyuan Fang; Haibin Huang; Xinwei Huang; Tong Jin; Minxuan Lin; Bo Liu; Celong Liu; Chongyang Ma; Xing Mei; Xiaohui Shen; Yaojie Shen; Fuwen Tan; Angtian Wang; Xiao Yang; Yiding Yang; Jiamin Yuan; Lingxi Zhang; Yuxin Zhang",
+      "Creator": "arXiv GenPDF (tex2pdf:57610bf)",
+      "DOI": "https://doi.org/10.48550/arXiv.2602.02092",
+      "License": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "PTEX.Fullbanner": "This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) kpathsea version 6.4.1",
+      "Producer": "pikepdf 8.15.1",
+      "Title": "FSVideo: Fast Speed Video Diffusion Model in a Highly-Compressed Latent Space",
+      "Trapped": "False",
+      "arXivID": "https://arxiv.org/abs/2602.02092v1"
+    },
+    "text_file": "C:\\Users\\h84415796\\Documents\\DiT\\tmp\\pdfs\\extracted\\2602.02092v1.txt",
+    "characters": 79019
+  },
+  {
+    "file": "C:\\Users\\h84415796\\Documents\\DiT\\paper\\负载\\2604.15911v1.pdf",
+    "pages": 66,
+    "metadata": {
+      "Author": "Shitong Shao; Lichen Bai; Pengfei Wan; James Kwok; Zeke Xie",
+      "CreationDate": "D:20260420004501+00'00'",
+      "Creator": "arXiv GenPDF (tex2pdf:a6404ea)",
+      "DOI": "https://doi.org/10.48550/arXiv.2604.15911",
+      "Keywords": "Diffusion Models, Video Generation, Accelerated Sampling, Efficient AI",
+      "License": "http://creativecommons.org/licenses/by-nc-nd/4.0/",
+      "ModDate": "D:20260420004501+00'00'",
+      "PTEX.Fullbanner": "This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) kpathsea version 6.4.1",
+      "Producer": "pikepdf 8.15.1",
+      "Subject": "-  General and reference  ->  Surveys and overviews.-  Computing methodologies  ->  Computer vision.",
+      "Title": "Efficient Video Diffusion Models: Advancements and Challenges",
+      "Trapped": "False",
+      "arXivID": "https://arxiv.org/abs/2604.15911v1"
+    },
+    "text_file": "C:\\Users\\h84415796\\Documents\\DiT\\tmp\\pdfs\\extracted\\2604.15911v1.txt",
+    "characters": 296274
+  }
+]
